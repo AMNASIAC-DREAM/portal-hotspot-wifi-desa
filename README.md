@@ -28,7 +28,7 @@ Klik:
 
 Cloudflare auto buat worker sample.
 
-🚀 STEP 4 — Padam semua code dan paste code Worker bro
+🚀 STEP 4 — Padam semua code dan paste code Worker
 
 Padam semua dalam editor Cloudflare.
 
@@ -36,13 +36,12 @@ LEPAS TU paste penuh script dalam folder workers-cloudflare di atas
 
 🚀 STEP 5 — Setup KV Namespaces
 
-Worker bro guna:
+Worker guna:
 ```
 env.HOTSPOT_KV
 ```
-JADI bro kena buat KV storage.
+buat KV storage.
 Cara buat:
-
 Pergi sidebar kiri: Workers → KV → Create Namespace
 
 Nama namespace:
@@ -54,9 +53,7 @@ Selesai create → akan keluar ID seperti:
 72b8ee4b21ad45ec9829d34cfc8d99a9
 ```
 🚀 STEP 6 — Bind KV ke Worker
-
 Pergi ke:
-
 Workers → klik nama worker → Settings → Bindings
 
 Tambah binding:
@@ -70,7 +67,7 @@ Pilih namespace HOTSPOT_KV yang bro buat tadi
 
 Save.
 
-👍 Sekarang Worker bro boleh panggil env.HOTSPOT_KV.get() dan .put().
+👍 Sekarang Worker boleh panggil env.HOTSPOT_KV.get() dan .put().
 
 🚀 STEP 7 — Save & Deploy Worker
 
@@ -78,15 +75,15 @@ Klik:
 
 Deploy
 
-Worker URL akan jadi macam:
+Worker URL akan jadi macam ni:
 ```arduino
-https://logi-hotspot-tls.<something>.workers.dev
+https://nama-server.<something>.workers.dev
 ```
 
 🚀 STEP 8 — TEST ENDPOINT
 Test TLS:
 ```
-https://logi-hotspot-tls.workers.dev/tls-info
+https://nama-server.workers.dev/tls-info
 ```
 Jika berjalan, akan keluar JSON:
 ```json
@@ -97,21 +94,23 @@ Jika berjalan, akan keluar JSON:
 }
 ```
 
-STEP 9 — Update login.html worker URL
-
-Dalam login.html:
-```js
-const WORKER_URL = 'https://logi-hotspot-tls.workers.dev';
+STEP 9 — Update login.html worker URL di atas ke dalam ftp mikrotik
 ```
-Tukar ikut Worker baru bro.
+ftp://192.168.88.1
+```
+Dalam login.html edit host workers :
+```js
+const WORKER_URL = 'https://nama-server.workers.dev';
+```
+Tukar ikut Worker baru.
 
-1. Upload Portal Files
+10. Upload Portal Files
 Letak semua file ke folder:
 ```bash
 /hotspot
 ```
 
-✅ 1. Allow Cloudflare Workers dalam Walled Garden (WAJIB)
+✅ 11. Allow Cloudflare Workers dalam Walled Garden (WAJIB)
 Cloudflare Workers biasanya berada bawah IP range:
 ```
 104.16.0.0/12
@@ -130,11 +129,11 @@ add action=allow dst-address=172.64.0.0/13
 /ip hotspot walled-garden ip add dst-address=172.64.0.0/13 action=allow
 ```
 
-✅ 2. Allow specific domain Workers.dev (WAJIB)
+✅ 12. Allow specific domain Workers.dev (WAJIB)
 
-Jika Worker URL bro:
+Jika Worker URL:
 ```arduino
-https://servers-workers-anda.workers.dev
+https://nama-server.workers.dev
 ```
 Tambah ke walled-garden layer7:
 Step A — Create rule:
@@ -142,7 +141,7 @@ Step A — Create rule:
 /ip hotspot walled-garden
 add dst-host=*.workers.dev action=allow
 add dst-host=*.cloudflare.com action=allow
-add dst-host=servers-workers-anda.workers.dev action=allow
+add dst-host=nama-server.workers.dev action=allow
 ```
 ✅ 3. Allow HTTPS (Port 443) traffic ke Worker
 
@@ -172,7 +171,7 @@ Test HTTPS:
 ```
 Kalau dapat “status: finished”, bermakna OK.
 
-🔥 6. Setting paling penting untuk login.html bro
+🔥 6. Setting paling penting untuk login.html
 Setting A — Allow HTML + JS dalam /hotspot
 ```bash
 /ip hotspot profile set hsprof1 html-directory=hotspot
@@ -180,9 +179,9 @@ Setting A — Allow HTML + JS dalam /hotspot
 
 Setting B — Redirect sukses
 
-Dalam login.html bro, Worker /status URL digunakan:
+Dalam login.html , Worker /status URL digunakan:
 ```bash
-set redirect-url="https://servers-workers-anda.workers.dev/status"
+set redirect-url="https://nama-server.workers.dev/status"
 ```
 Atau dari CLI:
 ```bash
@@ -193,7 +192,7 @@ Atau dari CLI:
 
 Buka browser HP:
 ```arduino
-https://servers-workers-anda.workers.dev/tls-info
+https://nama-server.workers.dev/tls-info
 ```
 Kalau dapat output JSON seperti:
 ```json
