@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="pragma" content="no-cache" />
+    <meta http-equiv="expires" content="-1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Hotspot Login - DNA Protected</title>
+    
+    <!-- JSEncrypt Library untuk RSA -->
+    <script src="jsencrypt.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 1.5em;
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 0.85em;
+            color: #888;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .status-item {
+            flex: 1;
+            min-width: 70px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 5px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-item .label {
+            font-size: 0.65em;
+            color: #888;
+            text-transform: uppercase;
+        }
+        
+        .status-item .value {
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+        
+        .status-item .value.ok { color: #2ed573; }
+        .status-item .value.error { color: #ff4757; }
+        .status-item .value.pending { color: #ffa502; }
+        
+        /* Login Box */
+        .login-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+        
+        .login-box h2 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #00d4ff;
+            text-align: center;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1.2em;
+            text-align: center;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        .input-group input::placeholder {
+            letter-spacing: 1px;
+            text-transform: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Result Message */
+        .result-box {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .result-box.success {
+            background: rgba(46, 213, 115, 0.2);
+            border: 2px solid #2ed573;
+            display: block;
+        }
+        
+        .result-box.error {
+            background: rgba(255, 71, 87, 0.2);
+            border: 2px solid #ff4757;
+            display: block;
+        }
+        
+        .result-box .title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .result-box .message {
+            font-size: 0.85em;
+            color: #ccc;
+        }
+        
+        /* Debug Section */
+        .debug-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .debug-header {
+            background: rgba(0, 212, 255, 0.15);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .debug-header h3 {
+            font-size: 0.85em;
+            color: #00d4ff;
+        }
+        
+        .debug-header .badge {
+            font-size: 0.7em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: rgba(0, 212, 255, 0.3);
+        }
+        
+        .debug-content {
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .debug-content.show {
+            display: block;
+        }
+        
+        .debug-content pre {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7em;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #aaa;
+        }
+        
+        .debug-table {
+            width: 100%;
+            font-size: 0.75em;
+        }
+        
+        .debug-table td {
+            padding: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .debug-table td:first-child {
+            color: #00d4ff;
+            width: 40%;
+        }
+        
+        .debug-table td:last-child {
+            color: #2ed573;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+        
+        .loading-overlay.show {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(0, 212, 255, 0.3);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 15px;
+            color: #00d4ff;
+            font-size: 0.9em;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #555;
+            font-size: 0.75em;
+        }
+        
+        /* Toggle Arrow */
+        .toggle-arrow {
+            transition: transform 0.3s;
+        }
+        
+        .toggle-arrow.open {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MIKROTIK HIDDEN FORM (Required for CHAP Authentication) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    $(if chap-id)
+    <form name="sendin" action="$(link-login-only)" method="post" style="display:none">
+        <input type="hidden" name="username" />
+        <input type="hidden" name="password" />
+        <input type="hidden" name="dst" value="" id="redirectDst" />
+        <input type="hidden" name="popup" value="true" />
+    </form>
+    <script src="/md5.js"></script>
+    $(endif)
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MAIN CONTAINER -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="container">
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>🔐 Hotspot Login</h1>
+            <p>DNA Protected Authentication</p>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="label">Browser</div>
+                <div class="value" id="statusBrowser">-</div>
+            </div>
+            <div class="status-item">
+                <div class="label">DNA</div>
+                <div class="value pending" id="statusDNA">...</div>
+            </div>
+            <div class="status-item">
+                <div class="label">TLS</div>
+                <div class="value pending" id="statusTLS">...</div>
+            </div>
+            <div class="status-item">
+                <div class="label">RSA</div>
+                <div class="value pending" id="statusRSA">...</div>
+            </div>
+        </div>
+        
+        <!-- Login Box -->
+        <div class="login-box">
+            <h2>🎫 Masukkan Kod Voucher</h2>
+            <form name="login" id="loginForm" onsubmit="return handleLogin(event)">
+                <div class="input-group">
+                    <input type="text" 
+                           id="voucherInput" 
+                           name="username"
+                           placeholder="Contoh: ABC123" 
+                           maxlength="20" 
+                           autocomplete="off"
+                           required>
+                    <input type="hidden" name="password" id="passwordInput">
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnLogin">
+                    🚀 CONNECT
+                </button>
+            </form>
+        </div>
+        
+        <!-- Result Box -->
+        <div class="result-box" id="resultBox">
+            <div class="title">
+                <span id="resultIcon">✅</span>
+                <span id="resultTitle">Success</span>
+            </div>
+            <div class="message" id="resultMessage"></div>
+        </div>
+        
+        <!-- Debug: DNA Info -->
+        <div class="debug-section">
+            <div class="debug-header" onclick="toggleDebug('dnaDebug')">
+                <h3>🧬 Device DNA</h3>
+                <div>
+                    <span class="badge" id="dnaBadge">-</span>
+                    <span class="toggle-arrow" id="dnaArrow">▼</span>
+                </div>
+            </div>
+            <div class="debug-content" id="dnaDebug">
+                <table class="debug-table" id="dnaTable">
+                    <tr><td colspan="2">Loading...</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Debug: TLS Info -->
+        <div class="debug-section">
+            <div class="debug-header" onclick="toggleDebug('tlsDebug')">
+                <h3>🔒 TLS Fingerprint</h3>
+                <div>
+                    <span class="badge" id="tlsBadge">-</span>
+                    <span class="toggle-arrow" id="tlsArrow">▼</span>
+                </div>
+            </div>
+            <div class="debug-content" id="tlsDebug">
+                <table class="debug-table" id="tlsTable">
+                    <tr><td colspan="2">Loading...</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Debug: RSA Keys -->
+        <div class="debug-section">
+            <div class="debug-header" onclick="toggleDebug('rsaDebug')">
+                <h3>🔐 RSA Keys (Debug Only)</h3>
+                <div>
+                    <span class="badge" id="rsaBadge">-</span>
+                    <span class="toggle-arrow" id="rsaArrow">▼</span>
+                </div>
+            </div>
+            <div class="debug-content" id="rsaDebug">
+                <pre id="rsaContent">Generating...</pre>
+            </div>
+        </div>
+        
+        <!-- Debug: Request/Response -->
+        <div class="debug-section">
+            <div class="debug-header" onclick="toggleDebug('requestDebug')">
+                <h3>📤 Request / Response</h3>
+                <div>
+                    <span class="badge" id="requestBadge">-</span>
+                    <span class="toggle-arrow" id="requestArrow">▼</span>
+                </div>
+            </div>
+            <div class="debug-content" id="requestDebug">
+                <pre id="requestContent">No request yet</pre>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            DNA Protected Hotspot System v1.0<br>
+            Powered by Cloudflare Workers
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Validating...</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CONFIGURATION -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        // Worker URL
+        const WORKER_URL = 'https://mikrotik.iepms2nizam.workers.dev';
+        
+        // Mikrotik variables (akan di-replace oleh Mikrotik)
+        const CHAP_ID = '$(chap-id)';
+        const CHAP_CHALLENGE = '$(chap-challenge)';
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MAIN SCRIPT -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // GLOBAL VARIABLES
+        // ═══════════════════════════════════════════════════════════════
+        let capturedDNA = null;
+        let capturedTLS = null;
+        let capturedRSA = null;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // DNA CAPTURE FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function detectBrowserType() {
+            const ua = navigator.userAgent;
+            
+            if (ua.includes('Firefox/')) {
+                return { type: 'Firefox', allowed: false };
+            }
+            if (ua.includes('; wv)') || ua.includes('WebView')) {
+                return { type: 'WebView', allowed: true };
+            }
+            if (ua.includes('HeyTapBrowser')) {
+                return { type: 'HeyTap', allowed: true };
+            }
+            if (ua.includes('Chrome/')) {
+                return { type: 'Chrome', allowed: true };
+            }
+            return { type: 'Other', allowed: true };
+        }
+        
+        function extractModel() {
+            const ua = navigator.userAgent;
+            
+            let match = ua.match(/Android\s[\d.]+;\s([^)]+)\sBuild\//);
+            if (match && match[1]) {
+                let model = match[1].trim();
+                if (model.includes(';')) {
+                    model = model.split(';').pop().trim();
+                }
+                if (model !== 'K') {
+                    return model;
+                }
+            }
+            
+            if (ua.includes('; K)') || ua.includes('; K ')) {
+                return 'hidden-by-chrome';
+            }
+            
+            return 'unknown';
+        }
+        
+        async function captureAudioLatency() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const latency = audioCtx.baseLatency;
+                audioCtx.close();
+                return latency || 'N/A';
+            } catch (e) {
+                return 'N/A';
+            }
+        }
+        
+        function captureWebGL() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                
+                if (!gl) {
+                    return { vendor: 'N/A', renderer: 'N/A', maxTexture: 'N/A', extensions: 0 };
+                }
+                
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                
+                return {
+                    vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+                    renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+                    maxTexture: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+                    extensions: gl.getSupportedExtensions()?.length || 0
+                };
+            } catch (e) {
+                return { vendor: 'N/A', renderer: 'N/A', maxTexture: 'N/A', extensions: 0 };
+            }
+        }
+        
+        async function captureDNA() {
+            const browser = detectBrowserType();
+            const webgl = captureWebGL();
+            const audioLatency = await captureAudioLatency();
+            
+            return {
+                model: extractModel(),
+                gpuVendor: webgl.vendor,
+                gpu: webgl.renderer,
+                audioLatency: audioLatency,
+                screen: `${window.screen.width}x${window.screen.height}`,
+                pixelRatio: window.devicePixelRatio,
+                touchPoints: navigator.maxTouchPoints,
+                maxTexture: webgl.maxTexture,
+                glExtensions: webgl.extensions,
+                browserType: browser.type,
+                browserAllowed: browser.allowed,
+                platform: navigator.platform,
+                userAgent: navigator.userAgent,
+                capturedAt: new Date().toISOString()
+            };
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // TLS CAPTURE
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function fetchTLS() {
+            try {
+                const response = await fetch(`${WORKER_URL}/tls-info`);
+                return await response.json();
+            } catch (e) {
+                return { error: e.message };
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // RSA KEY GENERATION (Using JSEncrypt - Debug/Log Only)
+        // ═══════════════════════════════════════════════════════════════
+        
+        function generateRSAKeys() {
+            try {
+                // Check if JSEncrypt exists
+                if (typeof JSEncrypt === 'undefined') {
+                    return {
+                        supported: false,
+                        error: 'JSEncrypt library not loaded'
+                    };
+                }
+                
+                // Generate RSA keys (1024-bit for speed)
+                const rsa = new JSEncrypt({ default_key_size: 1024 });
+                
+                const publicKey = rsa.getPublicKey();
+                const privateKey = rsa.getPrivateKey();
+                
+                if (!publicKey || !privateKey) {
+                    return {
+                        supported: false,
+                        error: 'Key generation failed'
+                    };
+                }
+                
+                // Get or create browser ID
+                let browserId;
+                try {
+                    browserId = localStorage.getItem("BROWSER_ID");
+                    if (!browserId) {
+                        browserId = crypto.randomUUID ? crypto.randomUUID() : 
+                                    'id-' + Math.random().toString(36).substring(2, 15);
+                        localStorage.setItem("BROWSER_ID", browserId);
+                    }
+                } catch(e) {
+                    browserId = "temp-" + Math.random().toString(36).substring(2, 15);
+                }
+                
+                return {
+                    supported: true,
+                    browserId: browserId,
+                    publicKey: publicKey,
+                    privateKey: privateKey,
+                    publicKeyLength: publicKey.length,
+                    privateKeyLength: privateKey.length,
+                    generatedAt: new Date().toISOString()
+                };
+                
+            } catch (e) {
+                return {
+                    supported: false,
+                    error: e.message
+                };
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // DISPLAY FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function displayDNA(dna) {
+            const fields = [
+                { key: 'model', label: 'Model', primary: true },
+                { key: 'gpuVendor', label: 'GPU Vendor', primary: true },
+                { key: 'gpu', label: 'GPU', primary: true },
+                { key: 'audioLatency', label: 'Audio Latency', primary: true },
+                { key: 'screen', label: 'Screen' },
+                { key: 'pixelRatio', label: 'Pixel Ratio' },
+                { key: 'touchPoints', label: 'Touch Points' },
+                { key: 'maxTexture', label: 'Max Texture' },
+                { key: 'glExtensions', label: 'GL Extensions' },
+                { key: 'browserType', label: 'Browser Type' }
+            ];
+            
+            let html = '';
+            fields.forEach(f => {
+                const style = f.primary ? 'color: #ffa502;' : '';
+                html += `<tr><td>${f.label}</td><td style="${style}">${dna[f.key]}</td></tr>`;
+            });
+            
+            document.getElementById('dnaTable').innerHTML = html;
+            document.getElementById('dnaBadge').textContent = '10 fields';
+            
+            const statusDNA = document.getElementById('statusDNA');
+            statusDNA.textContent = dna.browserAllowed ? 'OK' : 'Blocked';
+            statusDNA.className = 'value ' + (dna.browserAllowed ? 'ok' : 'error');
+            
+            document.getElementById('statusBrowser').textContent = dna.browserType;
+        }
+        
+        function displayTLS(tls) {
+            if (tls.error) {
+                document.getElementById('tlsTable').innerHTML = `<tr><td colspan="2" style="color:#ff4757;">Error: ${tls.error}</td></tr>`;
+                document.getElementById('statusTLS').textContent = 'Error';
+                document.getElementById('statusTLS').className = 'value error';
+                document.getElementById('tlsBadge').textContent = 'Error';
+                return;
+            }
+            
+            const fields = ['tlsVersion', 'tlsCipher', 'clientIP', 'city', 'country', 'asn'];
+            let html = '';
+            fields.forEach(f => {
+                html += `<tr><td>${f}</td><td>${tls[f] || 'N/A'}</td></tr>`;
+            });
+            
+            document.getElementById('tlsTable').innerHTML = html;
+            document.getElementById('tlsBadge').textContent = tls.tlsVersion || 'N/A';
+            document.getElementById('statusTLS').textContent = 'OK';
+            document.getElementById('statusTLS').className = 'value ok';
+        }
+        
+        function displayRSA(rsa) {
+            if (!rsa.supported) {
+                document.getElementById('rsaContent').textContent = `Error: ${rsa.error}`;
+                document.getElementById('statusRSA').textContent = 'Error';
+                document.getElementById('statusRSA').className = 'value error';
+                document.getElementById('rsaBadge').textContent = 'Error';
+                return;
+            }
+            
+            const content = `Browser ID: ${rsa.browserId}
+
+Public Key (${rsa.publicKeyLength} chars):
+${rsa.publicKey}
+
+Private Key (${rsa.privateKeyLength} chars):
+${rsa.privateKey}
+
+Generated: ${rsa.generatedAt}`;
+            
+            document.getElementById('rsaContent').textContent = content;
+            document.getElementById('rsaBadge').textContent = '1024-bit';
+            document.getElementById('statusRSA').textContent = 'OK';
+            document.getElementById('statusRSA').className = 'value ok';
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // LOGIN HANDLER
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const voucher = document.getElementById('voucherInput').value.trim().toUpperCase();
+            
+            if (!voucher) {
+                showResult(false, 'Error', 'Sila masukkan kod voucher');
+                return false;
+            }
+            
+            if (!capturedDNA) {
+                showResult(false, 'Error', 'DNA belum di-capture. Sila refresh page.');
+                return false;
+            }
+            
+            // Check Firefox
+            if (!capturedDNA.browserAllowed) {
+                showResult(false, 'Browser Tidak Disokong', 'Sila gunakan Chrome atau WebView untuk login.');
+                return false;
+            }
+            
+            // Show loading
+            showLoading('Validating device...');
+            
+            // Prepare request
+            const requestBody = {
+                voucher: voucher,
+                dna: {
+                    model: capturedDNA.model,
+                    gpuVendor: capturedDNA.gpuVendor,
+                    gpu: capturedDNA.gpu,
+                    audioLatency: capturedDNA.audioLatency,
+                    screen: capturedDNA.screen,
+                    pixelRatio: capturedDNA.pixelRatio,
+                    touchPoints: capturedDNA.touchPoints,
+                    maxTexture: capturedDNA.maxTexture,
+                    glExtensions: capturedDNA.glExtensions
+                },
+                tls: capturedTLS,
+                rsa: capturedRSA ? {
+                    browserId: capturedRSA.browserId,
+                    publicKey: capturedRSA.publicKey,
+                    generatedAt: capturedRSA.generatedAt
+                } : null,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Display request in debug
+            document.getElementById('requestContent').textContent = 
+                'REQUEST:\n' + JSON.stringify(requestBody, null, 2);
+            document.getElementById('requestBadge').textContent = 'Sent';
+            
+            try {
+                const response = await fetch(`${WORKER_URL}/api/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const result = await response.json();
+                
+                // Update debug
+                document.getElementById('requestContent').textContent = 
+                    'REQUEST:\n' + JSON.stringify(requestBody, null, 2) + 
+                    '\n\nRESPONSE (' + response.status + '):\n' + JSON.stringify(result, null, 2);
+                document.getElementById('requestBadge').textContent = response.status;
+                
+                hideLoading();
+                
+                if (result.success) {
+                    // SUCCESS - Submit to Mikrotik
+                    showResult(true, 'Device Verified!', 
+                        `${result.message}\nMatch Score: ${result.matchScore}`);
+                    
+                    showLoading('Connecting to internet...');
+                    
+                    // Auto submit to Mikrotik after short delay
+                    // Redirect to Worker /status page after auth
+                    setTimeout(() => {
+                        submitToMikrotik(voucher);
+                    }, 1000);
+                    
+                } else {
+                    // FAILED
+                    showResult(false, result.error || 'Validation Failed', 
+                        result.message || 'Unknown error');
+                }
+                
+            } catch (e) {
+                hideLoading();
+                document.getElementById('requestContent').textContent = 
+                    'REQUEST:\n' + JSON.stringify(requestBody, null, 2) + 
+                    '\n\nERROR:\n' + e.message;
+                document.getElementById('requestBadge').textContent = 'Error';
+                showResult(false, 'Connection Error', e.message);
+            }
+            
+            return false;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // MIKROTIK SUBMIT
+        // ═══════════════════════════════════════════════════════════════
+        
+        function submitToMikrotik(voucher) {
+            // Set redirect destination to Worker /status page
+            const statusUrl = `${WORKER_URL}/status?voucher=${encodeURIComponent(voucher)}`;
+            document.getElementById('redirectDst').value = statusUrl;
+            
+            // Set username and password (same for voucher)
+            document.sendin.username.value = voucher;
+            
+            // Check if CHAP is available
+            if (typeof hexMD5 === 'function' && CHAP_ID && CHAP_CHALLENGE && 
+                CHAP_ID !== '$(chap-id)' && CHAP_CHALLENGE !== '$(chap-challenge)') {
+                // Use MD5 CHAP
+                document.sendin.password.value = hexMD5(CHAP_ID + voucher + CHAP_CHALLENGE);
+            } else {
+                // Plain password (fallback)
+                document.sendin.password.value = voucher;
+            }
+            
+            // Submit form
+            document.sendin.submit();
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // UI HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function showResult(success, title, message) {
+            const box = document.getElementById('resultBox');
+            const icon = document.getElementById('resultIcon');
+            const titleEl = document.getElementById('resultTitle');
+            const msgEl = document.getElementById('resultMessage');
+            
+            box.className = 'result-box ' + (success ? 'success' : 'error');
+            icon.textContent = success ? '✅' : '❌';
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+        }
+        
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text || 'Loading...';
+            document.getElementById('loadingOverlay').classList.add('show');
+            document.getElementById('btnLogin').disabled = true;
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+            document.getElementById('btnLogin').disabled = false;
+        }
+        
+        function toggleDebug(id) {
+            const content = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('Debug', 'Arrow'));
+            content.classList.toggle('show');
+            if (arrow) arrow.classList.toggle('open');
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function init() {
+            console.log('🚀 Initializing Hotspot DNA System...');
+            
+            // Capture DNA
+            capturedDNA = await captureDNA();
+            displayDNA(capturedDNA);
+            console.log('🧬 DNA:', capturedDNA);
+            
+            // Fetch TLS
+            capturedTLS = await fetchTLS();
+            displayTLS(capturedTLS);
+            console.log('🔒 TLS:', capturedTLS);
+            
+            // Generate RSA (using JSEncrypt - for debug/log only)
+            capturedRSA = generateRSAKeys();
+            displayRSA(capturedRSA);
+            console.log('🔐 RSA:', capturedRSA);
+            
+            console.log('✅ System ready!');
+        }
+        
+        // Run on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
