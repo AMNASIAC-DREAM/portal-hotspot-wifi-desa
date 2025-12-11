@@ -1,8 +1,24 @@
+███████╗ ██████╗  ██████╗  ██╗
+██╔════╝██╔═══██╗██╔═══██╗███║
+███████╗██║   ██║██║   ██║╚██║   Hotspot TLS Fingerprint System
+╚════██║██║   ██║██║   ██║ ██║   Device DNA • TLS Capture • CHAP Auth
+███████║╚██████╔╝╚██████╔╝ ██║   Cloudflare Worker API • Anti-Bypass
+╚══════╝ ╚═════╝  ╚═════╝  ╚═╝
+
+1. Upload Portal Files
+Letak semua file ke folder:
+...bash
+   /hotspot
+
+
+
+
 ✅ 1. Allow Cloudflare Workers dalam Walled Garden (WAJIB)
 Cloudflare Workers biasanya berada bawah IP range:
-
+...
 104.16.0.0/12
 172.64.0.0/13
+...
 
 Masukkan dalam walled-garden IP Mikrotik:
 /ip hotspot walled-garden ip
